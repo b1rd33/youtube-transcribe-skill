@@ -179,16 +179,21 @@ echo "  Audio downloaded."
 echo ""
 echo "=== Step 3/4: Converting to WAV ==="
 
-# Find all downloaded MP3 files
-if [ "$PLAYLIST" = true ]; then
-    mapfile -d '' MP3_FILES < <(find "$OUTPUT_DIR" -maxdepth 1 -name "*.mp3" -print0 | sort -z)
-else
-    mapfile -d '' MP3_FILES < <(find "$OUTPUT_DIR" -maxdepth 1 -name "${SAFE_TITLE}*.mp3" -print0 | sort -z)
-fi
-
+# Find all downloaded MP3 files and convert to WAV
+# Note: SAFE_TITLE is sanitized (only alnum/._-) so glob expansion is safe
+MP3_FILES=()
 WAV_FILES=()
-for mp3 in "${MP3_FILES[@]}"; do
-    [ -z "$mp3" ] && continue
+
+for mp3 in "$OUTPUT_DIR"/*.mp3; do
+    [ -f "$mp3" ] || continue
+    # In single-video mode, only match our title
+    if [ "$PLAYLIST" = false ]; then
+        case "$(basename "$mp3")" in
+            "${SAFE_TITLE}"*) ;;
+            *) continue ;;
+        esac
+    fi
+    MP3_FILES+=("$mp3")
     wav="${mp3%.mp3}.wav"
     echo "  Converting: $(basename "$mp3") → $(basename "$wav")"
     ffmpeg -y -i "$mp3" -acodec pcm_s16le -ac 1 -ar 16000 "$wav" 2>/dev/null
