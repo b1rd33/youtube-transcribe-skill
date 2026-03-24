@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Audio/video files (generated during transcription)
+*.wav
+*.mp3
+*.mp4
+*.m4a
+*.opus
+*.flac
+*.webm
+
+# Transcription output
+*.json
+/tmp/
+/output/
+
+# Plan docs
+docs/
