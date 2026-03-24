@@ -29,6 +29,7 @@ MODEL="v3"
 DIARIZE=false
 SUBS_ONLY=false
 KEEP_AUDIO=false
+KEEP_VIDEO=false
 PLAYLIST=false
 CHUNK_MINUTES=0       # 0 = auto (chunk if >30 min)
 NO_CHUNK=false
@@ -50,6 +51,7 @@ Options:
   --diarize          Also run speaker diarization
   --subs-only        Skip FluidAudio, only download YouTube subtitles
   --keep-audio       Keep intermediate audio files (mp3/wav)
+  --keep-video       Also download the full video file
   --playlist         Process entire playlist
   --chunk MINUTES    Split audio into chunks of N minutes (default: auto at 30min)
   --no-chunk         Disable chunking even for long videos
@@ -66,6 +68,7 @@ while [[ $# -gt 0 ]]; do
         --diarize)   DIARIZE=true; shift ;;
         --subs-only) SUBS_ONLY=true; shift ;;
         --keep-audio) KEEP_AUDIO=true; shift ;;
+        --keep-video) KEEP_VIDEO=true; shift ;;
         --playlist)  PLAYLIST=true; shift ;;
         --chunk)     CHUNK_MINUTES="$2"; shift 2 ;;
         --no-chunk)  NO_CHUNK=true; shift ;;
@@ -162,6 +165,21 @@ fi
 echo ""
 echo "=== Step 2/4: Downloading audio ==="
 
+# Download full video first if requested
+if [ "$KEEP_VIDEO" = true ]; then
+    echo "  Downloading full video..."
+    VID_OPTS=(-f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best")
+    if [ "$PLAYLIST" = true ]; then
+        VID_OPTS+=(-o "$OUTPUT_DIR/%(playlist_index)03d_%(title)s.%(ext)s")
+    else
+        VID_OPTS+=(-o "$OUTPUT_DIR/${SAFE_TITLE}.%(ext)s")
+    fi
+    yt-dlp "${VID_OPTS[@]}" "$URL" 2>&1 | grep -E "Destination|100%|Merging" || true
+    echo "  Video saved."
+    echo ""
+fi
+
+# Now download audio for transcription
 YT_DLP_OPTS=(-x -f "bestaudio/best" --audio-format mp3 --audio-quality 0)
 if [ "$PLAYLIST" = true ]; then
     YT_DLP_OPTS+=(-o "$OUTPUT_DIR/%(playlist_index)03d_%(title)s.%(ext)s")

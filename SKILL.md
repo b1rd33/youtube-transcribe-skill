@@ -148,6 +148,7 @@ For chunked videos, Claude should:
 | Non-English video | `--model v3` (default, 25 languages) |
 | Meeting with speakers | Add `--diarize` flag |
 | Subtitles fallback only | `--subs-only` (skip FluidAudio, use YouTube captions) |
+| Download video + transcript | `--keep-video` (saves full MP4 alongside transcript) |
 | Batch process playlist | `--playlist` flag |
 | Long lecture (2h+) | `--chunk 10` (default auto-chunks at 30min) |
 | Short podcast | `--no-chunk` (keep as single transcript) |
