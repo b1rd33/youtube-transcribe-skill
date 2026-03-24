@@ -40,7 +40,21 @@ URL=""
 # Parse arguments
 # ============================================================
 show_help() {
-    sed -n '2,14p' "$0" | sed 's/^# *//'
+    cat << 'HELP'
+Usage: yt_transcribe.sh "YOUTUBE_URL" [OPTIONS]
+
+Options:
+  --output DIR       Output directory (default: ~/Downloads/yt-transcripts)
+  --lang LANG        Subtitle language code (default: en)
+  --model VERSION    FluidAudio model: v2 (English) or v3 (multilingual, default)
+  --diarize          Also run speaker diarization
+  --subs-only        Skip FluidAudio, only download YouTube subtitles
+  --keep-audio       Keep intermediate audio files (mp3/wav)
+  --playlist         Process entire playlist
+  --chunk MINUTES    Split audio into chunks of N minutes (default: auto at 30min)
+  --no-chunk         Disable chunking even for long videos
+  --help             Show this help message
+HELP
     exit 0
 }
 
@@ -166,21 +180,20 @@ echo ""
 echo "=== Step 3/4: Converting to WAV ==="
 
 # Find all downloaded MP3 files
-MP3_FILES=$(find "$OUTPUT_DIR" -name "${SAFE_TITLE}*.mp3" -o -name "*.mp3" 2>/dev/null | head -5)
-
-if [ -z "$MP3_FILES" ]; then
-    # Fallback: find any recent mp3
-    MP3_FILES=$(find "$OUTPUT_DIR" -name "*.mp3" -mmin -5 | sort)
+if [ "$PLAYLIST" = true ]; then
+    mapfile -d '' MP3_FILES < <(find "$OUTPUT_DIR" -maxdepth 1 -name "*.mp3" -print0 | sort -z)
+else
+    mapfile -d '' MP3_FILES < <(find "$OUTPUT_DIR" -maxdepth 1 -name "${SAFE_TITLE}*.mp3" -print0 | sort -z)
 fi
 
-WAV_FILES=""
-while IFS= read -r mp3; do
+WAV_FILES=()
+for mp3 in "${MP3_FILES[@]}"; do
     [ -z "$mp3" ] && continue
     wav="${mp3%.mp3}.wav"
     echo "  Converting: $(basename "$mp3") → $(basename "$wav")"
     ffmpeg -y -i "$mp3" -acodec pcm_s16le -ac 1 -ar 16000 "$wav" 2>/dev/null
-    WAV_FILES="$WAV_FILES $wav"
-done <<< "$MP3_FILES"
+    WAV_FILES+=("$wav")
+done
 
 echo "  Conversion complete."
 
@@ -190,9 +203,9 @@ echo "  Conversion complete."
 echo ""
 echo "=== Step 4/5: Checking duration & chunking ==="
 
-FINAL_WAV_FILES=""
+FINAL_WAV_FILES=()
 
-for wav in $WAV_FILES; do
+for wav in "${WAV_FILES[@]}"; do
     [ -z "$wav" ] && continue
     BASENAME=$(basename "$wav" .wav)
 
@@ -202,7 +215,8 @@ for wav in $WAV_FILES; do
     DURATION=${DURATION:-0}
     DURATION_MIN=$((DURATION / 60))
 
-    echo "  $(basename "$wav"): ${DURATION_MIN}m ${DURATION}s total"
+    DURATION_SEC=$((DURATION % 60))
+    echo "  $(basename "$wav"): ${DURATION_MIN}m ${DURATION_SEC}s total"
 
     # Determine if we should chunk
     SHOULD_CHUNK=false
@@ -246,7 +260,7 @@ for wav in $WAV_FILES; do
             ffmpeg -y -i "$wav" -ss "$OFFSET" -t "$CHUNK_SECONDS" \
                 -acodec pcm_s16le -ac 1 -ar 16000 "$CHUNK_FILE" 2>/dev/null
 
-            FINAL_WAV_FILES="$FINAL_WAV_FILES $CHUNK_FILE"
+            FINAL_WAV_FILES+=("$CHUNK_FILE")
             OFFSET=$((OFFSET + CHUNK_SECONDS))
         done
 
@@ -274,7 +288,7 @@ for wav in $WAV_FILES; do
         echo "  Manifest: $MANIFEST"
     else
         echo "  Short enough — no chunking needed."
-        FINAL_WAV_FILES="$FINAL_WAV_FILES $wav"
+        FINAL_WAV_FILES+=("$wav")
     fi
 done
 
@@ -286,7 +300,7 @@ echo "=== Step 5/5: Transcribing with FluidAudio ==="
 
 cd "$FLUIDAUDIO_HOME"
 
-for wav in $FINAL_WAV_FILES; do
+for wav in "${FINAL_WAV_FILES[@]}"; do
     [ -z "$wav" ] && continue
     BASENAME=$(basename "$wav" .wav)
     # Put chunk transcripts next to chunks, others in output dir
@@ -324,17 +338,17 @@ if [ "$KEEP_AUDIO" = false ]; then
     echo ""
     echo "Cleaning up intermediate files..."
     # Remove original WAV files
-    for wav in $WAV_FILES; do
+    for wav in "${WAV_FILES[@]}"; do
         [ -f "$wav" ] && rm "$wav" && echo "  Removed: $(basename "$wav")"
     done
     # Remove chunk WAV files
-    for wav in $FINAL_WAV_FILES; do
+    for wav in "${FINAL_WAV_FILES[@]}"; do
         [ -f "$wav" ] && rm "$wav" && echo "  Removed: $(basename "$wav")"
     done
     # Remove chunk directories if empty
     find "$OUTPUT_DIR" -name "*_chunks" -type d -empty -delete 2>/dev/null
     # Remove MP3 files
-    for mp3 in $MP3_FILES; do
+    for mp3 in "${MP3_FILES[@]}"; do
         [ -f "$mp3" ] && rm "$mp3" && echo "  Removed: $(basename "$mp3")"
     done
 fi

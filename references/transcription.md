@@ -96,6 +96,6 @@ sed '/^[0-9]*$/d; /^[0-9][0-9]:[0-9][0-9]/d; /^$/d' subtitles.srt > plain_text.t
 
 - **Always redirect to file:** `> transcript.txt 2>&1` — prevents terminal freezing
 - **English content:** Use `--model-version v2` for best accuracy
-- **Long videos:** FluidAudio handles them fine; no need to split
+- **Long videos:** Auto-chunked into 10min segments when >30min (use `--no-chunk` to disable)
 - **Noisy audio:** Consider normalizing volume before transcription
 - **Multiple speakers:** Use diarization + transcription together
