@@ -1,6 +1,6 @@
 # yt-dlp Transcribe Skill for Claude Code
 
-Download public media URLs compatible with yt-dlp — including YouTube videos and Instagram Reels — and transcribe them locally on your Mac. Powered by [FluidAudio](https://github.com/b1rd33/fluidaudio-skill): 25 languages, auto-detected, with no cloud ASR.
+Download public media URLs compatible with yt-dlp — including YouTube, Instagram, and X/Twitter — and transcribe them locally on your Mac. Powered by [FluidAudio](https://github.com/b1rd33/fluidaudio-skill): 25 languages, auto-detected, with no cloud ASR.
 
 ## What This Is
 
@@ -14,6 +14,7 @@ Public media URL → yt-dlp (download) → ffmpeg (16kHz WAV) → FluidAudio (tr
 
 - Transcribe public yt-dlp-compatible media in 25 languages (auto-detected)
 - Works with YouTube videos and public Instagram Reels
+- Works with X/Twitter posts containing video or audio
 - Smart chunking for long videos (auto-splits at 30min into 10min chunks)
 - Speaker diarization (who said what)
 - Platform subtitle fallback when available
@@ -48,6 +49,7 @@ git clone https://github.com/b1rd33/yt-dlp-transcribe-skill.git ~/.claude/skills
 In Claude Code, just say:
 - "Transcribe this YouTube video: https://youtube.com/watch?v=..."
 - "Translate this Instagram Reel: https://www.instagram.com/reel/.../"
+- "Transcribe this X post: https://x.com/.../status/..."
 - "Summarize this lecture: https://youtube.com/watch?v=..."
 - "Download and transcribe this podcast episode"
 - "Who is speaking in this YouTube interview?"
@@ -72,6 +74,16 @@ In Claude Code, just say:
 | Short video, no splitting | `--no-chunk` |
 | Custom chunk size | `--chunk 15` (minutes) |
 | Your authorized account media | `--cookies-from-browser safari` |
+
+## Main Platform Support
+
+| Platform | Supported media URLs | Notes |
+|---|---|---|
+| YouTube | Videos, Shorts, playlists, live/VOD | Use `--playlist` only when you want every item in a playlist. |
+| Instagram | Reels, individual posts, stories | Public individual media works best; profile extraction is currently marked broken by yt-dlp. |
+| X/Twitter | `x.com` or `twitter.com` status posts, Spaces | Private or login-gated media may require `--cookies-from-browser`. |
+
+Check an individual URL before processing with `yt-dlp --simulate "URL"`. Site behavior can change, so this is the authoritative test for a specific post.
 
 ## Related
 

@@ -6,7 +6,7 @@ description: |
 
 # yt-dlp Transcribe Skill
 
-Download public media URLs compatible with yt-dlp — including YouTube videos and Instagram Reels — extract audio, transcribe locally with FluidAudio, and summarize or translate them from a single URL. Availability can change by platform. For account-restricted media, pass only cookies from the user's own authorized browser profile.
+Download public media URLs compatible with yt-dlp — including YouTube, Instagram, and X/Twitter posts — extract audio, transcribe locally with FluidAudio, and summarize or translate them from a single URL. Availability can change by platform. For account-restricted media, pass only cookies from the user's own authorized browser profile.
 
 ## Prerequisites
 
@@ -24,6 +24,9 @@ swift build -c release
 ```bash
 # Full pipeline: public video URL → transcript
 ~/.claude/skills/yt-dlp-transcribe/scripts/yt_dlp_transcribe.sh "https://www.instagram.com/reel/REEL_ID/"
+
+# X/Twitter post with media
+~/.claude/skills/yt-dlp-transcribe/scripts/yt_dlp_transcribe.sh "https://x.com/ACCOUNT/status/POST_ID"
 
 # With options
 ~/.claude/skills/yt-dlp-transcribe/scripts/yt_dlp_transcribe.sh "URL" --lang en --model v2 --output ~/Documents
@@ -47,11 +50,11 @@ Public yt-dlp-compatible media URL
 ```bash
 # Download best audio, extract as MP3
 yt-dlp -x -f "bestaudio/best" --audio-format mp3 --audio-quality 0 \
-  -o "%(title)s.%(ext)s" "YOUTUBE_URL"
+  -o "%(title)s.%(ext)s" "MEDIA_URL"
 
 # Optional: grab creator-provided or platform-generated subtitles when available
 yt-dlp --write-auto-subs --write-subs --sub-langs "en" --convert-subs srt \
-  --skip-download -o "%(title)s" "YOUTUBE_URL"
+  --skip-download -o "%(title)s" "MEDIA_URL"
 ```
 
 ### Step 2: Convert to WAV for FluidAudio
@@ -88,6 +91,7 @@ Once you have the transcript, ask Claude to summarize, extract key points, creat
 | Audio Conversion | [audio.md](references/audio.md) | ffmpeg conversion options and formats |
 | Transcription | [transcription.md](references/transcription.md) | FluidAudio ASR settings and models |
 | Troubleshooting | [troubleshooting.md](references/troubleshooting.md) | Common issues and fixes |
+| Platform support | [platforms.md](references/platforms.md) | YouTube, Instagram, and X/Twitter URL types and limitations |
 
 ## Smart Chunking (Context Window Protection)
 
@@ -150,6 +154,7 @@ For chunked videos, Claude should:
 | Download video + transcript | `--keep-video` (saves full MP4 alongside transcript) |
 | Batch process playlist | `--playlist` flag |
 | Account-restricted media | `--cookies-from-browser safari` (your own profile only) |
+| X/Twitter post | Pass its full `https://x.com/.../status/...` URL |
 | Long lecture (2h+) | `--chunk 10` (default auto-chunks at 30min) |
 | Short podcast | `--no-chunk` (keep as single transcript) |
 

@@ -19,7 +19,7 @@ yt-dlp --version
 ### Download fails / HTTP 403 errors
 
 ```bash
-# Update yt-dlp (YouTube frequently changes their API)
+# Update yt-dlp (sites frequently change their APIs)
 brew upgrade yt-dlp
 # or
 yt-dlp -U
@@ -39,6 +39,18 @@ yt-dlp -f "worstaudio" "URL"
 
 # Check available formats
 yt-dlp -F "URL"
+
+## YouTube, Instagram, and X/Twitter
+
+Check an individual media URL without downloading it:
+
+```bash
+yt-dlp --simulate --no-playlist "URL"
+```
+
+- **YouTube:** Keep `yt-dlp` current. If extraction reports a JavaScript-runtime or challenge issue, follow yt-dlp's current dependency guidance before retrying.
+- **Instagram:** Use a single Reel or post URL. The upstream `instagram:user` extractor is currently marked broken, so do not use profile URLs as a workaround.
+- **X/Twitter:** Use the full `https://x.com/ACCOUNT/status/POST_ID` or equivalent `twitter.com` status URL. If yt-dlp reports authorization is required, retry only with `--cookies-from-browser BROWSER` for your own logged-in profile.
 ```
 
 ### Playlist not downloading
