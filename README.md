@@ -1,24 +1,24 @@
-# Video Transcribe Skill for Claude Code
+# yt-dlp Transcribe Skill for Claude Code
 
-Download public videos supported by yt-dlp — including YouTube videos and Instagram Reels — and transcribe them locally on your Mac. Powered by [FluidAudio](https://github.com/b1rd33/fluidaudio-skill): 25 languages, auto-detected, with zero cloud transcription.
+Download public media URLs compatible with yt-dlp — including YouTube videos and Instagram Reels — and transcribe them locally on your Mac. Powered by [FluidAudio](https://github.com/b1rd33/fluidaudio-skill): 25 languages, auto-detected, with no cloud ASR.
 
 ## What This Is
 
-A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code) that combines yt-dlp + ffmpeg + FluidAudio into a single pipeline: paste a public supported-video URL, get a transcript.
+A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code) that combines yt-dlp + ffmpeg + FluidAudio into a single pipeline: paste a public compatible-media URL, get a transcript.
 
 ```
-Public video URL → yt-dlp (download) → ffmpeg (16kHz WAV) → FluidAudio (transcribe) → transcript
+Public media URL → yt-dlp (download) → ffmpeg (16kHz WAV) → FluidAudio (transcribe) → transcript
 ```
 
 ## Features
 
-- Transcribe public yt-dlp-supported videos in 25 languages (auto-detected)
+- Transcribe public yt-dlp-compatible media in 25 languages (auto-detected)
 - Works with YouTube videos and public Instagram Reels
 - Smart chunking for long videos (auto-splits at 30min into 10min chunks)
 - Speaker diarization (who said what)
 - Platform subtitle fallback when available
 - Playlist support
-- All processing runs locally on Apple Neural Engine
+- Transcription runs locally on Apple Neural Engine; downloads come from the source platform
 
 ## Requirements
 
@@ -40,7 +40,7 @@ Then follow [fluidaudio-skill setup](https://github.com/b1rd33/fluidaudio-skill#
 ### 2. Install this skill
 
 ```bash
-git clone https://github.com/b1rd33/youtube-transcribe-skill.git ~/.claude/skills/youtube-transcribe
+git clone https://github.com/b1rd33/yt-dlp-transcribe-skill.git ~/.claude/skills/yt-dlp-transcribe
 ```
 
 ### 3. Use it
@@ -71,6 +71,7 @@ In Claude Code, just say:
 | Use available platform captions only | `--subs-only` |
 | Short video, no splitting | `--no-chunk` |
 | Custom chunk size | `--chunk 15` (minutes) |
+| Your authorized account media | `--cookies-from-browser safari` |
 
 ## Related
 

@@ -1,18 +1,20 @@
 #!/bin/bash
-# yt_transcribe.sh - Full public-video to transcript pipeline
+# yt_dlp_transcribe.sh - Full public-media to transcript pipeline
 # Uses yt-dlp + ffmpeg + FluidAudio for local transcription
 #
 # Usage:
-#   ./yt_transcribe.sh "VIDEO_URL" [OPTIONS]
+#   ./yt_dlp_transcribe.sh "MEDIA_URL" [OPTIONS]
 #
 # Options:
-#   --output DIR       Output directory (default: ~/Downloads/yt-transcripts)
+#   --output DIR       Output directory (default: ~/Downloads/yt-dlp-transcripts)
 #   --lang LANG        Subtitle language code (default: en)
 #   --model VERSION    FluidAudio model: v2 (English) or v3 (multilingual, default)
 #   --diarize          Also run speaker diarization
 #   --subs-only        Skip FluidAudio, only download available platform subtitles
 #   --keep-audio       Keep intermediate audio files (mp3/wav)
-#   --playlist         Process entire playlist
+#   --playlist         Process an entire playlist/collection URL
+#   --cookies FILE     Use a Netscape-format cookie file for authorized access
+#   --cookies-from-browser BROWSER  Use cookies from the user's authorized browser profile
 #   --chunk MINUTES    Split audio into chunks of N minutes (default: auto)
 #   --no-chunk         Disable chunking even for long videos
 #   --help             Show this help message
@@ -23,7 +25,7 @@ set -e
 # Configuration
 # ============================================================
 FLUIDAUDIO_HOME="${FLUIDAUDIO_HOME:-$HOME/Projects/FluidAudio}"
-OUTPUT_DIR="$HOME/Downloads/yt-transcripts"
+OUTPUT_DIR="$HOME/Downloads/yt-dlp-transcripts"
 LANG="en"
 MODEL="v3"
 DIARIZE=false
@@ -36,25 +38,29 @@ NO_CHUNK=false
 AUTO_CHUNK_THRESHOLD=1800  # 30 minutes in seconds
 DEFAULT_CHUNK_SIZE=600     # 10 minutes per chunk (sweet spot for context)
 URL=""
+YT_DLP_AUTH_OPTS=()
 
 # ============================================================
 # Parse arguments
 # ============================================================
 show_help() {
     cat << 'HELP'
-Usage: yt_transcribe.sh "VIDEO_URL" [OPTIONS]
+Usage: yt_dlp_transcribe.sh "MEDIA_URL" [OPTIONS]
 
-Accepts public URLs supported by yt-dlp, including YouTube and Instagram Reels.
+Accepts public media URLs compatible with yt-dlp, including YouTube and Instagram Reels.
 
 Options:
-  --output DIR       Output directory (default: ~/Downloads/yt-transcripts)
+  --output DIR       Output directory (default: ~/Downloads/yt-dlp-transcripts)
   --lang LANG        Subtitle language code (default: en)
   --model VERSION    FluidAudio model: v2 (English) or v3 (multilingual, default)
   --diarize          Also run speaker diarization
   --subs-only        Skip FluidAudio, only download available platform subtitles
   --keep-audio       Keep intermediate audio files (mp3/wav)
   --keep-video       Also download the full video file
-  --playlist         Process entire playlist
+  --playlist         Process an entire playlist/collection URL
+  --cookies FILE     Use a Netscape-format cookie file for authorized access
+  --cookies-from-browser BROWSER
+                     Use cookies from the user's authorized browser profile
   --chunk MINUTES    Split audio into chunks of N minutes (default: auto at 30min)
   --no-chunk         Disable chunking even for long videos
   --help             Show this help message
@@ -72,6 +78,8 @@ while [[ $# -gt 0 ]]; do
         --keep-audio) KEEP_AUDIO=true; shift ;;
         --keep-video) KEEP_VIDEO=true; shift ;;
         --playlist)  PLAYLIST=true; shift ;;
+        --cookies)   YT_DLP_AUTH_OPTS+=(--cookies "$2"); shift 2 ;;
+        --cookies-from-browser) YT_DLP_AUTH_OPTS+=(--cookies-from-browser "$2"); shift 2 ;;
         --chunk)     CHUNK_MINUTES="$2"; shift 2 ;;
         --no-chunk)  NO_CHUNK=true; shift ;;
         --help|-h)   show_help ;;
@@ -81,7 +89,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$URL" ]; then
-    echo "Error: a public video URL is required."
+    echo "Error: a public media URL is required."
     echo ""
     show_help
 fi
@@ -116,12 +124,17 @@ fi
 # ============================================================
 mkdir -p "$OUTPUT_DIR"
 
+YT_DLP_SOURCE_OPTS=(--no-playlist)
+if [ "$PLAYLIST" = true ]; then
+    YT_DLP_SOURCE_OPTS=(--yes-playlist)
+fi
+
 # Get video title for filenames
 echo "Fetching video info..."
 if [ "$PLAYLIST" = true ]; then
-    TITLE=$(yt-dlp --get-filename -o "%(playlist_title)s" --playlist-items 1 "$URL" 2>/dev/null || echo "playlist")
+    TITLE=$(yt-dlp "${YT_DLP_AUTH_OPTS[@]}" "${YT_DLP_SOURCE_OPTS[@]}" --get-filename -o "%(playlist_title)s" --playlist-items 1 "$URL" 2>/dev/null || echo "playlist")
 else
-    TITLE=$(yt-dlp --get-filename -o "%(title)s" "$URL" 2>/dev/null || echo "video")
+    TITLE=$(yt-dlp "${YT_DLP_AUTH_OPTS[@]}" "${YT_DLP_SOURCE_OPTS[@]}" --get-filename -o "%(title)s" "$URL" 2>/dev/null || echo "media")
 fi
 
 # Sanitize filename
@@ -134,7 +147,7 @@ echo ""
 # Step 1: Download platform subtitles (always try as fallback)
 # ============================================================
 echo "=== Step 1/4: Downloading available subtitles ==="
-yt-dlp --write-auto-subs --write-subs \
+yt-dlp "${YT_DLP_AUTH_OPTS[@]}" "${YT_DLP_SOURCE_OPTS[@]}" --write-auto-subs --write-subs \
     --sub-langs "$LANG" \
     --convert-subs srt \
     --skip-download \
@@ -176,7 +189,7 @@ if [ "$KEEP_VIDEO" = true ]; then
     else
         VID_OPTS+=(-o "$OUTPUT_DIR/${SAFE_TITLE}.%(ext)s")
     fi
-    yt-dlp "${VID_OPTS[@]}" "$URL" 2>&1 | grep -E "Destination|100%|Merging" || true
+    yt-dlp "${YT_DLP_AUTH_OPTS[@]}" "${YT_DLP_SOURCE_OPTS[@]}" "${VID_OPTS[@]}" "$URL" 2>&1 | grep -E "Destination|100%|Merging" || true
     echo "  Video saved."
     echo ""
 fi
@@ -189,7 +202,7 @@ else
     YT_DLP_OPTS+=(-o "$OUTPUT_DIR/${SAFE_TITLE}.%(ext)s")
 fi
 
-yt-dlp "${YT_DLP_OPTS[@]}" "$URL"
+yt-dlp "${YT_DLP_AUTH_OPTS[@]}" "${YT_DLP_SOURCE_OPTS[@]}" "${YT_DLP_OPTS[@]}" "$URL"
 
 echo "  Audio downloaded."
 

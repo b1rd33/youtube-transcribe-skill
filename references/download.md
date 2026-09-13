@@ -41,9 +41,9 @@ yt-dlp --write-auto-subs --sub-langs "all" --convert-subs srt --skip-download "U
 
 # List available subtitles
 yt-dlp --list-subs "URL"
+```
 
 Not every site exposes captions through yt-dlp. When no subtitle file is produced, continue with the local FluidAudio transcription workflow.
-```
 
 ## Playlist Download
 

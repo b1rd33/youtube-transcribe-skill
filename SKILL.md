@@ -1,12 +1,12 @@
 ---
-name: youtube-transcribe
+name: yt-dlp-transcribe
 description: |
-  Download public videos supported by yt-dlp (including YouTube and Instagram Reels), extract audio, transcribe locally with FluidAudio, and summarize or translate them. Use for public-video transcription, not DRM-protected or unauthorized private content.
+  Download public media URLs compatible with yt-dlp, extract audio, transcribe locally with FluidAudio, and summarize or translate the result. Use for public media transcription; platform support and available captions vary.
 ---
 
-# Video Transcribe Skill
+# yt-dlp Transcribe Skill
 
-Download public videos supported by yt-dlp — including YouTube videos and Instagram Reels — extract audio, transcribe locally with FluidAudio, and summarize or translate them from a single URL. For an account-restricted video, use only cookies from the user's own authorized browser profile.
+Download public media URLs compatible with yt-dlp — including YouTube videos and Instagram Reels — extract audio, transcribe locally with FluidAudio, and summarize or translate them from a single URL. Availability can change by platform. For account-restricted media, pass only cookies from the user's own authorized browser profile.
 
 ## Prerequisites
 
@@ -23,16 +23,16 @@ swift build -c release
 
 ```bash
 # Full pipeline: public video URL → transcript
-~/.claude/skills/youtube-transcribe/scripts/yt_transcribe.sh "https://www.instagram.com/reel/REEL_ID/"
+~/.claude/skills/yt-dlp-transcribe/scripts/yt_dlp_transcribe.sh "https://www.instagram.com/reel/REEL_ID/"
 
 # With options
-~/.claude/skills/youtube-transcribe/scripts/yt_transcribe.sh "URL" --lang en --model v2 --output ~/Documents
+~/.claude/skills/yt-dlp-transcribe/scripts/yt_dlp_transcribe.sh "URL" --lang en --model v2 --output ~/Documents
 ```
 
 ## Pipeline Overview
 
 ```
-Public yt-dlp-supported video URL
+Public yt-dlp-compatible media URL
   → yt-dlp (download audio only, best quality)
   → ffmpeg (convert to 16kHz mono WAV for speech recognition)
   → Auto-chunk if >30min (split into 10min segments)
@@ -103,13 +103,13 @@ Long videos produce massive transcripts that can overwhelm Claude's context wind
 
 ```bash
 # Force 15-minute chunks
-yt_transcribe.sh "URL" --chunk 15
+yt_dlp_transcribe.sh "URL" --chunk 15
 
 # Force 5-minute chunks (for very detailed analysis)
-yt_transcribe.sh "URL" --chunk 5
+yt_dlp_transcribe.sh "URL" --chunk 5
 
 # Disable chunking entirely
-yt_transcribe.sh "URL" --no-chunk
+yt_dlp_transcribe.sh "URL" --no-chunk
 ```
 
 **Chunked output structure:**
@@ -149,6 +149,7 @@ For chunked videos, Claude should:
 | Subtitles fallback only | `--subs-only` (skip FluidAudio, use available captions) |
 | Download video + transcript | `--keep-video` (saves full MP4 alongside transcript) |
 | Batch process playlist | `--playlist` flag |
+| Account-restricted media | `--cookies-from-browser safari` (your own profile only) |
 | Long lecture (2h+) | `--chunk 10` (default auto-chunks at 30min) |
 | Short podcast | `--no-chunk` (keep as single transcript) |
 

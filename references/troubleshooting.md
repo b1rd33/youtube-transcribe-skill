@@ -138,7 +138,7 @@ yt-dlp --restrict-filenames -x -f "bestaudio/best" --audio-format mp3 "URL"
 ### Script permission denied
 
 ```bash
-chmod +x ~/.claude/skills/youtube-transcribe/scripts/yt_transcribe.sh
+chmod +x ~/.claude/skills/yt-dlp-transcribe/scripts/yt_dlp_transcribe.sh
 ```
 
 ### Disk space issues
