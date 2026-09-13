@@ -1,21 +1,22 @@
-# YouTube Transcribe Skill for Claude Code
+# Video Transcribe Skill for Claude Code
 
-Download YouTube videos and transcribe them locally on your Mac — powered by [FluidAudio](https://github.com/b1rd33/fluidaudio-skill). 25 languages, auto-detected. Zero cloud dependencies.
+Download public videos supported by yt-dlp — including YouTube videos and Instagram Reels — and transcribe them locally on your Mac. Powered by [FluidAudio](https://github.com/b1rd33/fluidaudio-skill): 25 languages, auto-detected, with zero cloud transcription.
 
 ## What This Is
 
-A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code) that combines yt-dlp + ffmpeg + FluidAudio into a single pipeline: paste a YouTube URL, get a transcript.
+A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code) that combines yt-dlp + ffmpeg + FluidAudio into a single pipeline: paste a public supported-video URL, get a transcript.
 
 ```
-YouTube URL → yt-dlp (download) → ffmpeg (16kHz WAV) → FluidAudio (transcribe) → transcript
+Public video URL → yt-dlp (download) → ffmpeg (16kHz WAV) → FluidAudio (transcribe) → transcript
 ```
 
 ## Features
 
-- Transcribe any YouTube video in 25 languages (auto-detected)
+- Transcribe public yt-dlp-supported videos in 25 languages (auto-detected)
+- Works with YouTube videos and public Instagram Reels
 - Smart chunking for long videos (auto-splits at 30min into 10min chunks)
 - Speaker diarization (who said what)
-- YouTube subtitle fallback when available
+- Platform subtitle fallback when available
 - Playlist support
 - All processing runs locally on Apple Neural Engine
 
@@ -46,6 +47,7 @@ git clone https://github.com/b1rd33/youtube-transcribe-skill.git ~/.claude/skill
 
 In Claude Code, just say:
 - "Transcribe this YouTube video: https://youtube.com/watch?v=..."
+- "Translate this Instagram Reel: https://www.instagram.com/reel/.../"
 - "Summarize this lecture: https://youtube.com/watch?v=..."
 - "Download and transcribe this podcast episode"
 - "Who is speaking in this YouTube interview?"
@@ -66,7 +68,7 @@ In Claude Code, just say:
 | English content | `--model v2` (highest accuracy) |
 | Non-English video | `--model v3` (default, 25 languages) |
 | Meeting with speakers | `--diarize` |
-| Use YouTube captions only | `--subs-only` |
+| Use available platform captions only | `--subs-only` |
 | Short video, no splitting | `--no-chunk` |
 | Custom chunk size | `--chunk 15` (minutes) |
 

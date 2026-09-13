@@ -1,16 +1,16 @@
 #!/bin/bash
-# yt_transcribe.sh - Full YouTube to transcript pipeline
+# yt_transcribe.sh - Full public-video to transcript pipeline
 # Uses yt-dlp + ffmpeg + FluidAudio for local transcription
 #
 # Usage:
-#   ./yt_transcribe.sh "YOUTUBE_URL" [OPTIONS]
+#   ./yt_transcribe.sh "VIDEO_URL" [OPTIONS]
 #
 # Options:
 #   --output DIR       Output directory (default: ~/Downloads/yt-transcripts)
 #   --lang LANG        Subtitle language code (default: en)
 #   --model VERSION    FluidAudio model: v2 (English) or v3 (multilingual, default)
 #   --diarize          Also run speaker diarization
-#   --subs-only        Skip FluidAudio, only download YouTube subtitles
+#   --subs-only        Skip FluidAudio, only download available platform subtitles
 #   --keep-audio       Keep intermediate audio files (mp3/wav)
 #   --playlist         Process entire playlist
 #   --chunk MINUTES    Split audio into chunks of N minutes (default: auto)
@@ -42,14 +42,16 @@ URL=""
 # ============================================================
 show_help() {
     cat << 'HELP'
-Usage: yt_transcribe.sh "YOUTUBE_URL" [OPTIONS]
+Usage: yt_transcribe.sh "VIDEO_URL" [OPTIONS]
+
+Accepts public URLs supported by yt-dlp, including YouTube and Instagram Reels.
 
 Options:
   --output DIR       Output directory (default: ~/Downloads/yt-transcripts)
   --lang LANG        Subtitle language code (default: en)
   --model VERSION    FluidAudio model: v2 (English) or v3 (multilingual, default)
   --diarize          Also run speaker diarization
-  --subs-only        Skip FluidAudio, only download YouTube subtitles
+  --subs-only        Skip FluidAudio, only download available platform subtitles
   --keep-audio       Keep intermediate audio files (mp3/wav)
   --keep-video       Also download the full video file
   --playlist         Process entire playlist
@@ -79,7 +81,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$URL" ]; then
-    echo "Error: YouTube URL is required."
+    echo "Error: a public video URL is required."
     echo ""
     show_help
 fi
@@ -129,9 +131,9 @@ echo "Output: $OUTPUT_DIR/"
 echo ""
 
 # ============================================================
-# Step 1: Download YouTube subtitles (always try as fallback)
+# Step 1: Download platform subtitles (always try as fallback)
 # ============================================================
-echo "=== Step 1/4: Downloading YouTube subtitles ==="
+echo "=== Step 1/4: Downloading available subtitles ==="
 yt-dlp --write-auto-subs --write-subs \
     --sub-langs "$LANG" \
     --convert-subs srt \
@@ -144,7 +146,7 @@ SUBS_FILE=$(ls "$OUTPUT_DIR/${SAFE_TITLE}"*.srt 2>/dev/null | head -1)
 if [ -n "$SUBS_FILE" ]; then
     echo "  Subtitles saved: $SUBS_FILE"
 else
-    echo "  No subtitles found on YouTube"
+    echo "  No platform subtitles found"
 fi
 
 if [ "$SUBS_ONLY" = true ]; then

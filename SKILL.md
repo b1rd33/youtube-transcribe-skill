@@ -1,13 +1,12 @@
 ---
 name: youtube-transcribe
 description: |
-  Download YouTube videos, extract audio, transcribe with FluidAudio (local macOS Neural Engine), and summarize. Full pipeline from URL to transcript to insights. Works with any YouTube video, supports 25+ languages.
-  MANDATORY TRIGGERS: youtube transcribe, youtube transcript, youtube summary, summarize youtube, youtube audio, download youtube, youtube to text, video transcript, video summary, summarize video, youtube summarize, yt transcribe, yt summary, youtube notes, video notes, lecture notes from youtube, podcast from youtube, youtube podcast
+  Download public videos supported by yt-dlp (including YouTube and Instagram Reels), extract audio, transcribe locally with FluidAudio, and summarize or translate them. Use for public-video transcription, not DRM-protected or unauthorized private content.
 ---
 
-# YouTube Transcribe Skill
+# Video Transcribe Skill
 
-Download YouTube videos, extract audio, transcribe locally with FluidAudio, and summarize — all from a single URL.
+Download public videos supported by yt-dlp — including YouTube videos and Instagram Reels — extract audio, transcribe locally with FluidAudio, and summarize or translate them from a single URL. For an account-restricted video, use only cookies from the user's own authorized browser profile.
 
 ## Prerequisites
 
@@ -23,8 +22,8 @@ swift build -c release
 ## Quick Start
 
 ```bash
-# Full pipeline: YouTube URL → transcript
-~/.claude/skills/youtube-transcribe/scripts/yt_transcribe.sh "https://www.youtube.com/watch?v=VIDEO_ID"
+# Full pipeline: public video URL → transcript
+~/.claude/skills/youtube-transcribe/scripts/yt_transcribe.sh "https://www.instagram.com/reel/REEL_ID/"
 
 # With options
 ~/.claude/skills/youtube-transcribe/scripts/yt_transcribe.sh "URL" --lang en --model v2 --output ~/Documents
@@ -33,7 +32,7 @@ swift build -c release
 ## Pipeline Overview
 
 ```
-YouTube URL
+Public yt-dlp-supported video URL
   → yt-dlp (download audio only, best quality)
   → ffmpeg (convert to 16kHz mono WAV for speech recognition)
   → Auto-chunk if >30min (split into 10min segments)
@@ -43,14 +42,14 @@ YouTube URL
 
 ## Step-by-Step Manual Workflow
 
-### Step 1: Download Audio from YouTube
+### Step 1: Download Audio from a Public Video
 
 ```bash
 # Download best audio, extract as MP3
 yt-dlp -x -f "bestaudio/best" --audio-format mp3 --audio-quality 0 \
   -o "%(title)s.%(ext)s" "YOUTUBE_URL"
 
-# Optional: Also grab YouTube's auto-generated subtitles as fallback
+# Optional: grab creator-provided or platform-generated subtitles when available
 yt-dlp --write-auto-subs --write-subs --sub-langs "en" --convert-subs srt \
   --skip-download -o "%(title)s" "YOUTUBE_URL"
 ```
@@ -147,7 +146,7 @@ For chunked videos, Claude should:
 | English lecture/podcast | `--model v2` (English-optimized) |
 | Non-English video | `--model v3` (default, 25 languages) |
 | Meeting with speakers | Add `--diarize` flag |
-| Subtitles fallback only | `--subs-only` (skip FluidAudio, use YouTube captions) |
+| Subtitles fallback only | `--subs-only` (skip FluidAudio, use available captions) |
 | Download video + transcript | `--keep-video` (saves full MP4 alongside transcript) |
 | Batch process playlist | `--playlist` flag |
 | Long lecture (2h+) | `--chunk 10` (default auto-chunks at 30min) |
@@ -165,7 +164,7 @@ The pipeline creates these files in the output directory:
 | `{title}_chunk00N_transcript.txt` | Chunk transcripts (long videos) |
 | `{title}_chunks.txt` | Chunk manifest with time ranges |
 | `{title}_diarization.json` | Speaker segments (if `--diarize`) |
-| `{title}.en.srt` | YouTube subtitles (if available) |
+| `{title}.en.srt` | Platform subtitles (if available) |
 
 ## Tips
 
@@ -173,7 +172,7 @@ The pipeline creates these files in the output directory:
 |-----|--------|
 | **Always save output to files** | `> transcript.txt 2>&1` — prevents terminal freezing |
 | **Use v2 for English** | Much higher accuracy for English-only content |
-| **YouTube subs as fallback** | If FluidAudio fails, YouTube auto-subs are decent |
+| **Platform subtitles as fallback** | If FluidAudio fails, creator/platform captions may be available |
 | **Long videos auto-chunk** | >30min videos split into 10min chunks automatically |
 | **Adjust chunk size** | `--chunk 5` for detailed, `--chunk 20` for broad summaries |
 | **Playlists** | yt-dlp natively supports playlist URLs |

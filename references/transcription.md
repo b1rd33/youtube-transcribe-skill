@@ -68,9 +68,9 @@ swift run -c release fluidaudiocli process audio.wav --export-embeddings embeddi
 }
 ```
 
-## YouTube Subtitles as Fallback
+## Platform Subtitles as Fallback
 
-If FluidAudio is unavailable, YouTube's auto-generated subtitles work as a fallback:
+If FluidAudio is unavailable, captions exposed by the source platform can work as a fallback:
 
 ```bash
 # Download auto-generated subs
@@ -83,7 +83,7 @@ yt-dlp --write-auto-subs --sub-langs "en" --convert-subs srt --skip-download "UR
 |--------|----------|-------|-----------|---------|
 | FluidAudio v2 | Excellent (English) | ~190x real-time | English | Yes |
 | FluidAudio v3 | Very Good | ~190x real-time | 25 languages | Yes |
-| YouTube Auto-Subs | Good | Instant | Many | No |
+| Platform captions | Varies | Instant | Varies | No |
 
 ### SRT to Plain Text
 

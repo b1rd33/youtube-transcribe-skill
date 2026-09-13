@@ -1,4 +1,4 @@
-# YouTube Download Reference
+# Public Video Download Reference
 
 ## Installation
 
@@ -27,10 +27,10 @@ yt-dlp -x -f "bestaudio/best" --audio-format mp3 --audio-quality 0 \
 ## Subtitle Download
 
 ```bash
-# Auto-generated subtitles (YouTube's speech recognition)
+# Auto-generated subtitles, where the platform exposes them
 yt-dlp --write-auto-subs --sub-langs "en" --convert-subs srt --skip-download "URL"
 
-# Official subtitles (creator-provided)
+# Creator-provided subtitles, where available
 yt-dlp --write-subs --sub-langs "en" --convert-subs srt --skip-download "URL"
 
 # Both official and auto-generated
@@ -41,6 +41,8 @@ yt-dlp --write-auto-subs --sub-langs "all" --convert-subs srt --skip-download "U
 
 # List available subtitles
 yt-dlp --list-subs "URL"
+
+Not every site exposes captions through yt-dlp. When no subtitle file is produced, continue with the local FluidAudio transcription workflow.
 ```
 
 ## Playlist Download
